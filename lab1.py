@@ -3,16 +3,23 @@ import socket
 import uuid
 
 def get_local_ip():
-    """Retrieve the local IP address of the machine."""
+    """Retrieve the correct local IP address."""
     try:
-        return socket.gethostbyname(socket.gethostname())
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))  # Google DNS
+        local_ip = s.getsockname()[0]
+        s.close()
+        return local_ip
     except socket.error:
-        return "127.0.0.1" 
+        return "127.0.0.1"
+
+
 
 def get_mac_address():
-    """Retrieve the MAC address of the machine."""
+    """Retrieve the correct MAC address."""
     mac = uuid.getnode()
-    mac_address = ':'.join(f'{(mac >> i) & 0xFF:02X}' for i in range(40, -1, -8))
+    mac_address = ':'.join(['{:02X}'.format((mac >> ele) & 0xFF)
+                            for ele in range(0, 8 * 6, 8)][::-1])
     return mac_address
 
 def main():
@@ -24,7 +31,7 @@ def main():
     net = network_layer.NetworkLayer()
     data_link = datalink_layer.DataLinkLayer()
     phys = physical_layer.PhysicalLayer()
-
+    
     ip_address = get_local_ip()
     mac_address = get_mac_address()
 
